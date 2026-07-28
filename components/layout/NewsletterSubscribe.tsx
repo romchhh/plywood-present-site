@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 export default function NewsletterSubscribe() {
   const [email, setEmail] = useState("");
@@ -36,6 +37,7 @@ export default function NewsletterSubscribe() {
       setStatus("success");
       setMessage("Дякуємо! Ви підписані на розсилку.");
       setEmail("");
+      trackMetaEvent("Lead", { content_name: "newsletter" });
     } catch {
       setStatus("error");
       setMessage("Помилка підписки. Спробуйте пізніше.");

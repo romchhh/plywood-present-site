@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { siteContact } from "@/lib/siteContact";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 export default function ContactsPage() {
   const [agreed, setAgreed] = useState(false);
@@ -32,6 +33,7 @@ export default function ContactsPage() {
         return;
       }
       setSubmitted(true);
+      trackMetaEvent("Contact");
     } catch {
       setError("Помилка відправки. Спробуйте пізніше.");
     } finally {

@@ -6,6 +6,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useBasket } from "@/lib/BasketProvider";
 import { GA4_BRAND, GA4_CURRENCY, GA4_VERTICAL, pushGA4EcommerceEvent } from "@/lib/ga4Ecommerce";
+import {
+  markMetaPurchaseTracked,
+  trackMetaEvent,
+  wasMetaPurchaseTracked,
+} from "@/lib/metaPixel";
 
 interface OrderItem {
   id?: number;
@@ -144,7 +149,7 @@ function PaymentSuccessContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load when order ref changes
   }, [orderRef]);
 
-  // GA4 eCommerce purchase + Google Ads enhanced conversions (1x per transaction)
+  // GA4 eCommerce purchase + Google Ads enhanced conversions + Meta Pixel Purchase (1x per transaction)
   useEffect(() => {
     if (state !== "paid") return;
     const txId = order?.invoice_id ?? orderId;
@@ -196,6 +201,21 @@ function PaymentSuccessContent() {
       } catch {
         // ignore storage write errors
       }
+    }
+
+    // Meta Pixel Purchase — covers one-click / Mono return when FinalCard did not fire yet
+    // Dedup key = orderReference (same as FinalCard orderId), not Mono invoice_id
+    if (orderId && !wasMetaPurchaseTracked(orderId) && (order?.items?.length ?? 0) > 0) {
+      trackMetaEvent("Purchase", {
+        content_ids: (order?.items ?? []).map((it) =>
+          String(it.product_id ?? it.id ?? it.product_name)
+        ),
+        content_type: "product",
+        value,
+        currency: "UAH",
+        num_items: (order?.items ?? []).reduce((sum, it) => sum + it.quantity, 0),
+      });
+      markMetaPurchaseTracked(orderId);
     }
 
     if (!convAlreadyTracked) {

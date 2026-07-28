@@ -16,6 +16,7 @@ import { registerServiceWorker } from "@/lib/registerSW";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { WebVitals } from "@/components/shared/WebVitals";
 import MainContent from "@/components/shared/MainContent";
+import MetaPixelPageView from "@/components/shared/MetaPixelPageView";
 import { OrganizationStructuredData, WebSiteStructuredData } from "@/components/shared/StructuredData";
 import { buildRootSiteMetadata } from "@/lib/seo";
 import { SITE_ICON_PATH, siteMetadataIcons } from "@/lib/siteBrand";
@@ -128,7 +129,7 @@ export default function RootLayout({
               t.src=v;s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '1148656287371559');
+              fbq('init', '1795952121574997');
               fbq('track', 'PageView');
             `,
           }}
@@ -139,10 +140,13 @@ export default function RootLayout({
             height="1"
             width="1"
             style={{ display: 'none' }}
-            src="https://www.facebook.com/tr?id=1148656287371559&ev=PageView&noscript=1"
+            src="https://www.facebook.com/tr?id=1795952121574997&ev=PageView&noscript=1"
             alt=""
           />
         </noscript>
+        <Suspense fallback={null}>
+          <MetaPixelPageView />
+        </Suspense>
         
         <a href="#main-content" className="skip-link">
           Перейти до основного контенту

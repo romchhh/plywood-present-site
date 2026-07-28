@@ -8,6 +8,7 @@ import { getProductImageSrc } from "@/lib/getFirstProductImage";
 import { scrollPageToTopReliable } from "@/lib/scrollPageToTop";
 import { useProducts } from "@/lib/useProducts";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 interface SearchSidebarProps {
   isOpen: boolean;
@@ -299,6 +300,9 @@ export default function SearchSidebar({
       setSearchHistory(getSearchHistory());
       setQuery(searchQuery);
       setShowSuggestions(false);
+      trackMetaEvent("Search", {
+        search_string: searchQuery.trim(),
+      });
     }
   };
 

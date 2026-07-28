@@ -15,6 +15,7 @@ import {
   GA4_VERTICAL,
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 interface BasketItem {
   id: number;
@@ -140,14 +141,14 @@ export function BasketProvider({ children }: { children: ReactNode }) {
     if (cachedStock !== null && cachedStock >= totalQuantity) {
       pendingAddRef.current = newItem;
       const trackAddToCart = () => {
-        if (typeof window !== "undefined" && window.fbq) {
+        if (typeof window !== "undefined") {
           const value = getItemSubtotal(
             newItem.price,
             newItem.quantity,
             newItem.discount_percentage,
             newItem.color_surcharge_uah
           );
-          window.fbq("track", "AddToCart", {
+          trackMetaEvent("AddToCart", {
             content_name: newItem.name,
             content_ids: [String(newItem.id)],
             content_type: "product",
@@ -241,14 +242,14 @@ export function BasketProvider({ children }: { children: ReactNode }) {
 
       pendingAddRef.current = newItem;
       const trackAddToCart = () => {
-        if (typeof window !== "undefined" && window.fbq) {
+        if (typeof window !== "undefined") {
           const value = getItemSubtotal(
             newItem.price,
             newItem.quantity,
             newItem.discount_percentage,
             newItem.color_surcharge_uah
           );
-          window.fbq("track", "AddToCart", {
+          trackMetaEvent("AddToCart", {
             content_name: newItem.name,
             content_ids: [String(newItem.id)],
             content_type: "product",

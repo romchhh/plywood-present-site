@@ -13,6 +13,11 @@ import {
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
 import { ENABLE_ONLINE_CARD_PAYMENT } from "@/lib/paymentConfig";
+import {
+  markMetaPurchaseTracked,
+  trackMetaEvent,
+  wasMetaPurchaseTracked,
+} from "@/lib/metaPixel";
 
 /** Calculate order subtotal from basket items */
 const ACCENT = "#8B5E3F";
@@ -51,6 +56,7 @@ export default function FinalCard() {
   }, []);
 
   const hasTrackedBeginCheckoutRef = useRef(false);
+  const hasTrackedInitiateCheckoutRef = useRef(false);
 
   // CUSTOMER (Ім'я та Прізвище окремо для макета)
   const [firstName, setFirstName] = useState("");
@@ -77,20 +83,25 @@ export default function FinalCard() {
     }
   }, [deliveryMethod]);
 
-  // Track InitiateCheckout event for Meta Pixel when component mounts with items
+  // Track InitiateCheckout event for Meta Pixel once per checkout session
   useEffect(() => {
-    if (items.length > 0 && typeof window !== 'undefined' && window.fbq) {
-      const totalValue = getSubtotal(items);
-
-      window.fbq('track', 'InitiateCheckout', {
-        content_ids: items.map(item => String(item.id)),
-        content_type: 'product',
-        value: totalValue,
-        currency: 'UAH',
-        num_items: items.reduce((sum, item) => sum + item.quantity, 0)
-      });
+    if (items.length === 0) {
+      hasTrackedInitiateCheckoutRef.current = false;
+      return;
     }
-  }, [items]); // Track when basket changes
+    if (hasTrackedInitiateCheckoutRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const totalValue = getSubtotal(items);
+    trackMetaEvent("InitiateCheckout", {
+      content_ids: items.map((item) => String(item.id)),
+      content_type: "product",
+      value: totalValue,
+      currency: "UAH",
+      num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+    });
+    hasTrackedInitiateCheckoutRef.current = true;
+  }, [items]);
 
   // GA4 eCommerce begin_checkout - send once per checkout session
   useEffect(() => {
@@ -465,24 +476,18 @@ export default function FinalCard() {
           return;
         }
 
-        // Track Purchase event for Meta Pixel
-        if (typeof window !== 'undefined' && window.fbq) {
-          const totalValue = items.reduce((total, item) => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const discount = item.discount_percentage 
-              ? (typeof item.discount_percentage === 'string' ? parseFloat(item.discount_percentage) : item.discount_percentage)
-              : 0;
-            const price = discount > 0 ? itemPrice * (1 - discount / 100) : itemPrice;
-            return total + price * item.quantity;
-          }, 0);
-
-          window.fbq('track', 'Purchase', {
-            content_ids: items.map(item => String(item.id)),
-            content_type: 'product',
+        // Track Purchase for Meta Pixel (deduped on /success via localStorage)
+        const totalValue = getSubtotal(items);
+        const numItems = items.reduce((sum, item) => sum + item.quantity, 0);
+        if (!wasMetaPurchaseTracked(orderId)) {
+          trackMetaEvent("Purchase", {
+            content_ids: items.map((item) => String(item.id)),
+            content_type: "product",
             value: totalValue,
-            currency: 'UAH',
-            num_items: items.reduce((sum, item) => sum + item.quantity, 0)
+            currency: "UAH",
+            num_items: numItems,
           });
+          markMetaPurchaseTracked(orderId);
         }
 
         const requiresPayment =

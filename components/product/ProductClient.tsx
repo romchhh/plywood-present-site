@@ -20,6 +20,7 @@ import {
   GA4_VERTICAL,
   pushGA4EcommerceEvent,
 } from "@/lib/ga4Ecommerce";
+import { trackMetaEvent } from "@/lib/metaPixel";
 import {
   LABEL_FREE_DELIVERY_FROM_2000,
 } from "@/lib/siteBrand";
@@ -242,6 +243,15 @@ export default function ProductClient({ product }: ProductClientProps) {
           google_business_vertical: GA4_VERTICAL,
         },
       ],
+    });
+
+    trackMetaEvent("ViewContent", {
+      content_name: product.name,
+      content_ids: [String(product.id)],
+      content_type: "product",
+      content_category: analyticsCategory ?? "Каталог",
+      value: unitPrice,
+      currency: "UAH",
     });
   }, [
     analyticsCategory,

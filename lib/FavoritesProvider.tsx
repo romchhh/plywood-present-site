@@ -14,6 +14,7 @@ import {
   parseFavoritesFromStorage,
   type FavoriteProductSnapshot,
 } from "@/lib/favoritesStorage";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 type FavoritesContextType = {
   items: FavoriteProductSnapshot[];
@@ -51,11 +52,22 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleFavorite = useCallback((product: FavoriteProductSnapshot) => {
+    let added = false;
     setItems((prev) => {
       const exists = prev.some((p) => p.id === product.id);
       if (exists) return prev.filter((p) => p.id !== product.id);
+      added = true;
       return [product, ...prev.filter((p) => p.id !== product.id)];
     });
+    if (added) {
+      trackMetaEvent("AddToWishlist", {
+        content_name: product.name,
+        content_ids: [String(product.id)],
+        content_type: "product",
+        value: product.price,
+        currency: "UAH",
+      });
+    }
   }, []);
 
   const removeFavorite = useCallback((productId: number) => {
